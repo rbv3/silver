@@ -31,7 +31,7 @@ void Camera3d::Reset() {
   v_ = glm::vec3{0.0, 1.0, 0.0};
   n_ = glm::vec3{0.0, 0.0, 1.0};
   focus_ = glm::vec3{0.0f, 0.0f, -1.0f};
-  distance_from_projection_ = 1.0f;
+  distance_from_projection_ = 0.7f;
   visible_area_ = glm::vec2{1.0f, 1.0f};
   Orthonomalize();
 }

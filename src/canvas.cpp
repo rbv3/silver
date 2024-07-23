@@ -8,6 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <SFML/Graphics/Texture.hpp>
+#include <SFML/Graphics/Image.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Vertex.hpp>
 #include <SFML/Graphics/VertexArray.hpp>
@@ -44,6 +47,15 @@ glm::vec3 BaricenterCoordinates(
 }
 
 glm::vec2 Baricenter(const std::array<glm::vec2, 3>& triangule_vertices) {
+  return glm::vec2{(triangule_vertices[0].x + triangule_vertices[1].x +
+                    triangule_vertices[2].x) /
+                       3.0,
+                   (triangule_vertices[0].y + triangule_vertices[1].y +
+                    triangule_vertices[2].y) /
+                       3.0};
+}
+
+glm::vec2 Normal(const std::array<glm::vec2, 3>& triangule_vertices) {
   return glm::vec2{(triangule_vertices[0].x + triangule_vertices[1].x +
                     triangule_vertices[2].x) /
                        3.0,
@@ -110,12 +122,53 @@ std::vector<glm::vec2> ScanLine(glm::vec2 p0, glm::vec2 p1, glm::vec2 p2) {
   }
   return points;
 }
+
+sf::Texture eyeTexture;
+sf::Texture lightTexture;
+sf::Texture normalTexture;
+sf::Texture paramTexture;
+sf::Image eyeMap;
+sf::Image lightMap;
+sf::Image normalMap;
+sf::Image paraMap;
+void loadTextures() {
+  if(!eyeTexture.loadFromFile("C:\\Users\\drigo\\Documents\\silver\\assets\\textures\\EyeMap_1.bmp")) {
+    std::cout<<"Failed load"<<std::endl;
+  } else {
+    eyeMap = eyeTexture.copyToImage();
+  }
+  if(!lightTexture.loadFromFile("C:\\Users\\drigo\\Documents\\silver\\assets\\textures\\LightMap_1.bmp")) {
+    std::cout<<"Failed load"<<std::endl;
+  } else {
+    lightMap = lightTexture.copyToImage();
+  }
+  if(!normalTexture.loadFromFile("C:\\Users\\drigo\\Documents\\silver\\assets\\textures\\NormalMap_1.bmp")) {
+    std::cout<<"Failed load"<<std::endl;
+  } else {
+    normalMap = normalTexture.copyToImage();
+  }
+  if(!paramTexture.loadFromFile("C:\\Users\\drigo\\Documents\\silver\\assets\\textures\\ParaMap_1.bmp")) {
+    std::cout<<"Failed load"<<std::endl;
+  } else {
+    paraMap = paramTexture.copyToImage();
+  }
+  int i = 255, j = 255;
+  std::cout<<"Loggin texture"<<std::endl;
+  std::cout<<eyeMap.getSize().x<<std::endl;
+  std::cout<<eyeMap.getSize().y<<std::endl;
+  std::cout<<int(eyeMap.getPixel(i, j).r)<<std::endl;
+  std::cout<<int(eyeMap.getPixel(i, j).g)<<std::endl;
+  std::cout<<int(eyeMap.getPixel(i, j).b)<<std::endl;
+  std::cout<<"End of logging texture"<<std::endl;
+}
 }  // namespace internal
+
 
 Canvas::Canvas(Window* target, Projection3d* projection)
     : target_(target), projection_(projection), objects_{} {}
 
 void Canvas::AddObject(const std::vector<Triangle>& object) {
+  internal::loadTextures();
   objects_.push_back(object);
 }
 
@@ -131,7 +184,11 @@ void Canvas::DrawPoints(const std::vector<glm::vec2>& points,
   for (int i = 0; i < points.size(); ++i) {
     vertexs[i].position =
         sf::Vector2f{std::round(points[i].x), std::round(points[i].y)};
-    vertexs[i].color = color;
+    // vertexs[i].color = sf::Color(color.r * modifier, color.g * modifier, color.b * modifier);
+    
+    vertexs[i].color = sf::Color(
+      255, 255, 0
+    );
   }
   target_->window_.draw(vertexs);
 }
@@ -140,11 +197,23 @@ void Canvas::DrawPoints(const std::vector<glm::vec2>& points,
                         const std::vector<sf::Color>& colors) {
   sf::VertexArray vertexs(sf::Points, points.size());
   for (int i = 0; i < points.size(); ++i) {
+    glm::vec3 colorIntensity = GetLightIntensity();
+    // std::cout<<points[i].x<<" "<<points[i].y<<std::endl;
     vertexs[i].position =
         sf::Vector2f{std::round(points[i].x), std::round(points[i].y)};
-    vertexs[i].color = colors[i];
+    vertexs[i].color = sf::Color(
+      255, 255, 0
+    );
+    vertexs[i].color = sf::Color(
+      colors[i].r * colorIntensity.x,
+      colors[i].g * colorIntensity.y,
+      colors[i].b * colorIntensity.z
+    );
   }
   target_->window_.draw(vertexs);
+}
+glm::vec3 Canvas::GetLightIntensity() {
+  return glm::vec3{0.2, 0.5, 0.5};
 }
 
 void Canvas::FillTriangle(Triangle& triangle) {
@@ -221,7 +290,6 @@ void Canvas::Draw() {
           }
 
           render_points.push_back(point);
-          //DrawPoints({p0.value(), p1.value(), p2.value()}, sf::Color::Green);
         }
       }
     }

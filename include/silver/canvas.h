@@ -26,6 +26,10 @@ class Canvas : public INode {
   void DrawPoints(const std::vector<glm::vec2>& points, const sf::Color& color);
   void DrawPoints(const std::vector<glm::vec2>& points,
                   const std::vector<sf::Color>& colors);
+
+  glm::vec3 GetLightIntensity();
+  void loadTexture();
+
   void Draw();
   void FillTriangle(Triangle& triangle);
 
